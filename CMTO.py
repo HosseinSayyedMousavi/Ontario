@@ -15,13 +15,19 @@ sheet = workbook.active
 con = sqlite3.connect('Results.db')
 cure=con.cursor()
 try:
-    cure.execute("create table %s ( profileId TEXT , data JSON)"%"Persons")
-    cure.execute("create table %s ( corporationId TEXT , data JSON)"%"Corporations")
+    cure.execute("create table %s ( ProfileName TEXT , data JSON)"%"Persons")
+    cure.execute("create table %s ( CorporationName TEXT , data JSON)"%"Corporations")
 except:
     pass
 #API format 1 : 
-r = requests.get("https://cmto.ca.thentiacloud.net/rest/public/profile/search/?keyword=all&skip=0&take=10&authorizedToPractice=0&acupunctureAuthorized=0&gender=all&registrationStatus=all&city=all&sortOrder=asc&sortField=lastname&_=1679739073295", headers=headers)
-Response = r.json()
+while True:
+    try:
+        r = requests.get("https://cmto.ca.thentiacloud.net/rest/public/profile/search/?keyword=all&skip=0&take=10&authorizedToPractice=0&acupunctureAuthorized=0&gender=all&registrationStatus=all&city=all&sortOrder=asc&sortField=lastname&_=1679739073295", headers=headers)
+        Response = r.json()
+    except:
+        print("Error Connection")
+    else:
+        break
 resultCount = Response["resultCount"]
 pages=round(resultCount/10)
 
@@ -31,11 +37,12 @@ for p in range(0,pages+1):
     while True:
         try:
             r = requests.get("https://cmto.ca.thentiacloud.net/rest/public/profile/search/?keyword=all&skip=%s&take=10&authorizedToPractice=0&acupunctureAuthorized=0&gender=all&registrationStatus=all&city=all&sortOrder=asc&sortField=lastname&_=1679739073295"%p1, headers=headers)
+            Response = r.json()
         except:
-            pass
+            print("Error Connection")
         else:
             break
-    Response = r.json()
+    
     Results = Response["result"]
     for result in Results:
         JsonResult={}
@@ -43,6 +50,7 @@ for p in range(0,pages+1):
         JsonResult["practiceLocation"] = result["practiceLocation"]
         JsonResult["firstName"]=result["firstName"]
         JsonResult["lastName"] = result["lastName"]
+        ProfileName = result["firstName"] + " " + result["lastName"]
         JsonResult["gender"] = result["gender"]
         JsonResult["commonName"] = result["commonName"]
         JsonResult["city"] = result["city"]
@@ -51,11 +59,12 @@ for p in range(0,pages+1):
         while True:
             try:
                 r2 = requests.get("https://cmto.ca.thentiacloud.net/rest/public/profile/get/?id=%s&_=1679750037565"%profileId,headers=headers)
+                Response2 = r2.json()
             except:
-                pass
+                print("Error Connection")
             else:
                 break
-        Response2 = r2.json()
+        
         JsonResult["initialRegistrationDate"] = Response2["initialRegistrationDate"]
         JsonResult["classOfRegistration"] = Response2["registrationHistory"][0]["classOfRegistration"]
         JsonResult["Status"] = Response2["registrationHistory"][0]["registrationStatus"]
@@ -65,17 +74,18 @@ for p in range(0,pages+1):
         JsonResult["education"] = Response2["education"]
         JsonResult["Language_Used_In_Practice"]= Response2["languagesOfCare"] # List
         JsonResult["nameHistory"] = Response2["nameHistory"] # List
-        cure.execute("insert into Persons values (?, ?)",[profileId, json.dumps(JsonResult)])
+        cure.execute("insert into Persons values (?, ?)",[ProfileName, json.dumps(JsonResult)])
         con.commit()
 # API Format 2:
 while True:
     try:
         R=requests.get("https://cmto.ca.thentiacloud.net/rest/public/corporation/search/?keyword=all&skip=0&take=10&active=0&_=1679814511460",headers=headers)
+        RESPONSE=R.json()
     except:
-        pass
+        print("Error Connection")
     else:
         break
-RESPONSE=r.json()
+
 ResultCount=RESPONSE["resultCount"]
 Pages=round(ResultCount/10)
 for p in range(0,Pages+1):
@@ -84,16 +94,18 @@ for p in range(0,Pages+1):
     while True :
         try:
             R=requests.get("https://cmto.ca.thentiacloud.net/rest/public/corporation/search/?keyword=all&skip=%s&take=10&active=0&_=1679814511460"%p1,headers=headers)
+            RESPONSE=R.json()
         except:
-            pass
+            print("Error Connection")
         else:
             break
-    RESPONSE=r.json()
-    Results = RESPONSE["results"]
+    
+    Results = RESPONSE["result"]
     for result in Results:
         JsonResult={}
         corporationId = result["corporationId"]
         JsonResult["corporationName"] = result["corporationName"]
+        CorporationName = result["corporationName"]
         JsonResult["City"] = result["corporationCity"]
         JsonResult["Province"] = result["corporationProvince"]
         JsonResult["Country"] = result["corporationCountry"]
@@ -101,11 +113,12 @@ for p in range(0,Pages+1):
         while True:
             try:
                 R2 = requests.get("https://cmto.ca.thentiacloud.net/rest/public/corporation/get/?id=%s&_=1679815905957"%corporationId,headers=headers)
+                RESPONSE2 = R2.json()
             except:
-                pass
+                print("Error Connection")
             else:
                 break
-        RESPONSE2 = R2.json()
+        
         JsonResult["registrationNumber"] = RESPONSE2["registrationNumber"]
         JsonResult["Street_Address"] = RESPONSE2["address1"]
         JsonResult["Postal_Code"] = RESPONSE2["corporationPostalCode"]
@@ -114,5 +127,5 @@ for p in range(0,Pages+1):
         JsonResult["Email"] = RESPONSE2["email"]
         JsonResult["website"] = RESPONSE2["website"]
         JsonResult["shareholders"] = RESPONSE2["shareholder"] #List
-        cure.execute("insert into Corporations values (?, ?)",[profileId, json.dumps(JsonResult)])
+        cure.execute("insert into Corporations values (?, ?)",[CorporationName, json.dumps(JsonResult)])
         con.commit()
