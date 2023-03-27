@@ -1,7 +1,5 @@
 import requests
-from pprintpp import pprint
 import json
-import openpyxl
 import sqlite3
 headers = {"accept": "application/json, text/plain, */*",
            "accept-encoding": "gzip, deflate, br",
@@ -10,13 +8,13 @@ headers = {"accept": "application/json, text/plain, */*",
            "referer": "https://cmto.ca.thentiacloud.net/webs/cmto/register/",
           "sec-fetch-site": "same-origin",
            }
-workbook = openpyxl.Workbook()
-sheet = workbook.active
+
 con = sqlite3.connect('Results.db')
 cure=con.cursor()
 try:
     cure.execute("create table %s ( ProfileName TEXT , data JSON)"%"Persons")
     cure.execute("create table %s ( CorporationName TEXT , data JSON)"%"Corporations")
+    con.commit()
 except:
     pass
 #API format 1 : 
@@ -33,7 +31,6 @@ pages=round(resultCount/10)
 
 for p in range(0,pages+1):
     p1=10*p
-    print("Persons : " + str(p1)+" of "+str(resultCount))
     while True:
         try:
             r = requests.get("https://cmto.ca.thentiacloud.net/rest/public/profile/search/?keyword=all&skip=%s&take=10&authorizedToPractice=0&acupunctureAuthorized=0&gender=all&registrationStatus=all&city=all&sortOrder=asc&sortField=lastname&_=1679739073295"%p1, headers=headers)
@@ -44,7 +41,10 @@ for p in range(0,pages+1):
             break
     
     Results = Response["result"]
+    i=0
     for result in Results:
+        i+=1
+        print("Persons : " + str(p1+i)+" of "+str(resultCount))
         JsonResult={}
         profileId=result["profileId"]
         JsonResult["practiceLocation"] = result["practiceLocation"]
@@ -88,9 +88,9 @@ while True:
 
 ResultCount=RESPONSE["resultCount"]
 Pages=round(ResultCount/10)
+
 for p in range(0,Pages+1):
     p1=10*p
-    print("Corporations : " + str(p1)+" of "+str(ResultCount))
     while True :
         try:
             R=requests.get("https://cmto.ca.thentiacloud.net/rest/public/corporation/search/?keyword=all&skip=%s&take=10&active=0&_=1679814511460"%p1,headers=headers)
@@ -101,7 +101,10 @@ for p in range(0,Pages+1):
             break
     
     Results = RESPONSE["result"]
+    i=0
     for result in Results:
+        i+=1
+        print("Corporations : " + str(p1+i)+" of "+str(ResultCount))
         JsonResult={}
         corporationId = result["corporationId"]
         JsonResult["corporationName"] = result["corporationName"]
@@ -118,14 +121,17 @@ for p in range(0,Pages+1):
                 print("Error Connection")
             else:
                 break
-        
-        JsonResult["registrationNumber"] = RESPONSE2["registrationNumber"]
-        JsonResult["Street_Address"] = RESPONSE2["address1"]
-        JsonResult["Postal_Code"] = RESPONSE2["corporationPostalCode"]
-        JsonResult["Phone_Number"] = RESPONSE2["phone"]
-        JsonResult["faxNumber"] = RESPONSE2["faxNumber"]
-        JsonResult["Email"] = RESPONSE2["email"]
-        JsonResult["website"] = RESPONSE2["website"]
-        JsonResult["shareholders"] = RESPONSE2["shareholder"] #List
+        try:
+            JsonResult["registrationNumber"] = RESPONSE2["registrationNumber"]
+            JsonResult["Street_Address"] = RESPONSE2["address1"]
+            JsonResult["Postal_Code"] = RESPONSE2["corporationPostalCode"]
+            JsonResult["Phone_Number"] = RESPONSE2["phone"]
+            JsonResult["faxNumber"] = RESPONSE2["faxNumber"]
+            JsonResult["Email"] = RESPONSE2["email"]
+            JsonResult["website"] = RESPONSE2["website"]
+            JsonResult["shareholders"] = RESPONSE2["shareholder"] #List
+
+        except :
+            pass
         cure.execute("insert into Corporations values (?, ?)",[CorporationName, json.dumps(JsonResult)])
         con.commit()
