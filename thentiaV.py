@@ -58,11 +58,9 @@ for profile in profiles:
     except : pass
     try:data["Summary"]["Patient Type"] = profile["professionalActivity"]["patientTypes"]
     except : pass
+    try:data["Location"]= profile["searchaddress"]
+    except : pass
     try:data["Location"]["Name of the Hospital"] = profile["primarypractice"]["name"]
-    except : pass
-    try:data["Location"]["Address"] = profile["searchaddress"]["address"]
-    except : pass
-    try:data["Location"]["ZipCode"] = profile["searchaddress"]["postalcode"]
     except : pass
     try:data["Contact Information"]["Email"]= profile["primarypractice"]["email"]
     except : pass
@@ -74,7 +72,11 @@ for profile in profiles:
     except : pass
     try:data["Current Licence Information"]["Active Until"] = profile["expirationRegistrationDate"]
     except : pass
-    try:data["Current Licence Information"]["Conditions & Limitations"] = profile["conditions"]
+    try:
+        for notice in profile["publicNotices"]:
+            if notice["noticeType"]["name"] == "Condition\/Limitation" :
+                data["Current Licence Information"]["Conditions & Limitations"] = notice["summary"]
+                break
     except : pass
     try:data["Professional Activities"]["Works in"] = profile["professionalActivity"]["employmentType"]
     except : pass
@@ -84,7 +86,11 @@ for profile in profiles:
     except:  pass
     try: data["Specialty Board Certification"] = profile["education"]["certificateDate"]+"-"+profile["education"]["name"]
     except: pass
-    try: data["Hearing"] = profile["initialRegistrationDate"]
+    try: 
+        for notice in profile["publicNotices"]:
+            if notice["noticeType"]["name"] == "Hearing" :
+                data["Hearing"] = notice["summary"]
+                break
     except: pass
     try: data["Page URL"] = "https://cvo.ca.thentiacloud.net/webs/cvo/register/#/profile/"+profile["id"]
     except: pass
@@ -92,3 +98,4 @@ for profile in profiles:
     con2.commit()
     i += 1
     print(i)
+
