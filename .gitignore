@@ -2,3 +2,6 @@
 Results*
 *.db
 *.json
+*.zip
+*.pyc
+*.exe
