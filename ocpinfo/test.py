@@ -1,7 +1,7 @@
 import sqlite3
-conn = sqlite3.connect('book.db')
+conn = sqlite3.connect('Pharmacy.db')
 cursor = conn.cursor()
-cursor.execute("SELECT site_id FROM book_cfi_ir")
+cursor.execute("SELECT * FROM Pharmacy.db")
 site_ids = cursor.fetchall()
 print(site_ids)
 input()
