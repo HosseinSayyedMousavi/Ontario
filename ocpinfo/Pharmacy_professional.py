@@ -46,11 +46,12 @@ Pages = cursor.fetchall()
 for i in range(0,len(Pages)):
     for page in json.loads(Pages[i][0])["SRL"]:
         OutpuData={}
-        OutpuData["Name"] =page["Name"]
+        OutpuData["Name"] ={"Name":page["Name"]}
         OutpuData['FriendlyStatus'] = page['FriendlyStatus']
         OutpuData["Type"] = page["Type"]
         href = page["href"]
         href = "https://members.ocpinfo.com/tcpr/public/pr/en/" +href
+        OutpuData['Page Link'] = href
         url = urlCreator(href)
         mytry=0
         while mytry < maxtry:
@@ -72,13 +73,23 @@ for i in range(0,len(Pages)):
         try:
             FormParameterList = json.loads(re.findall(r"FormParameterList =(.*})",Content.replace("\\",""))[0])
             soup = BeautifulSoup(Content,"html.parser")
-            OutpuData['Page Link'] = href
-            OutpuData['WorkPlaces'] = FormParameterList['WorkPlaces']
-            OutpuData["EducationList"] = FormParameterList["EducationList"]
-            OutpuData["LanguageCareList"] = FormParameterList['LanguageCareList']
-            OutpuData["InjectionTrainingList"] = FormParameterList['InjectionTrainingList']
-            OutpuData["Registration number"] = soup.select("#pid22")[0].text.strip("Registration number:").strip()
-            OutpuData["Page Content"] = Content
+
+            try:OutpuData['WorkPlaces'] = FormParameterList['WorkPlaces']
+            except:pass
+            try:OutpuData["EducationList"] = FormParameterList["EducationList"]
+            except:pass
+            try:OutpuData["LanguageCareList"] = FormParameterList['LanguageCareList']
+            except:pass
+            try:OutpuData["InjectionTrainingList"] = FormParameterList['InjectionTrainingList']
+            except:pass
+            try:OutpuData["Registration number"] = soup.select("#pid22")[0].text.strip("Registration number:").strip()
+            except:pass
+            try:OutpuData["Gender"] = soup.select("#Gender")[0].text.strip("\r\n").strip()
+            except:pass
+            try:OutpuData["Name"]["PreviousNames"] = soup.select("#PreviousNames")[0].text.strip("\r\n").strip()
+            except:pass
+            try:OutpuData["Name"]["PreferredName"] = soup.select("#PreferredName")[0].text.strip("\r\n").strip()
+            except:pass
         except:
           print("Error2")
              

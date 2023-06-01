@@ -3,8 +3,16 @@ import json
 import sqlite3
 import math
 from datetime import datetime
-con = sqlite3.connect('cpo_thentiacloud.db')
-
+con = sqlite3.connect('crpo_thentiacloud.db')
+STATUS ={
+    "REGISTER_PROFILE_STATUS_QUALIFYING": "Authorized to practise as a Qualifying registrant"
+    ,"REGISTER_PROFILE_STATUS_WORKING_TOWARDS": "Authorized to practise while working toward independent practice"
+    ,"REGISTER_PROFILE_STATUS_INDEPENDENT": "Authorized for independent practice"
+    ,"REGISTER_PROFILE_STATUS_TEMPORARY": "Authorized to practise as a Temporary registrant"
+    ,"REGISTER_PROFILE_STATUS_INACTIVE": "Not currently practising as a Registered Psychotherapist in Ontario"
+    ,"REGISTER_PROFILE_STATUS_NOT_REGISTRANT": "No longer registered with CRPO"
+    ,"REGISTER_PROFILE_STATUS_UNAUTHORIZED": "Unauthorized to practise as a Registered Psychotherapist in Ontario"
+}
 cure=con.cursor()
 try:
     cure.execute("create table data (firstName TEXT , lastName TEXT , data JSON)")
@@ -95,9 +103,10 @@ for pagenum in range(0,math.floor(int(resultCount)/20)):
                 except:pass
                 try:data["Category"]=profile["registrationCategory"]
                 except:pass
-                try:data["Status"] = profile["registrationHistory"][0]["classOfRegistration"]
-                except:pass
-                try:data["Date of Initial Registration"] = datetime.strptime(profile["registrationHistory"][0]["effectiveDate"].split("T")[0], "%Y-%m-%d").date().strftime("%b-%d-%Y")
+                if "registrationStatus" in profile.keys():
+                    try:data["Status"] = STATUS[profile["registrationStatus"]]
+                    except:data["Status"] = profile["registrationStatus"]
+                try:data["Date of Initial Registration"] = datetime.strptime(profile["initialRegistrationDate"].split("T")[0], "%Y-%m-%d").date().strftime("%b-%d-%Y")
                 except:pass
                 try:data["E-mail Address"] = profile["email"]
                 except:pass
@@ -105,7 +114,7 @@ for pagenum in range(0,math.floor(int(resultCount)/20)):
                 except:pass
                 try:data["Languages of Care"] = profile["language"]
                 except:pass
-                try:data["Current Registration with Other Statutory Regulatory Bodies"] = data["otherRegistrations"]
+                try:data["Current Registration with Other Statutory Regulatory Bodies"] = profile["otherRegistrations"]
                 except:pass
                 try:data["Page Link"] = "https://crpo.ca.thentiacloud.net/webs/crpo/register/#/profile/all/0/20/"+profile["id"]
                 except:pass

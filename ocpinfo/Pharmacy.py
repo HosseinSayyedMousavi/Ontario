@@ -48,9 +48,10 @@ for i in range(0,len(Pages)):
         OutpuData["Name_of_the_Pharmacy"] =page["Name"]
         OutpuData['FriendlyStatus'] = page['FriendlyStatus']
         OutpuData["Type_of_Pharmacy"] = page["Type"]
-        OutpuData["Address"]={'Address':page['Address'] , 'CompanyLocation' : page['CompanyLocation']}
+        
         href = page["href"]
         href = "https://members.ocpinfo.com/tcpr/public/pr/en/" +href
+        OutpuData['Page Link'] = href
         url = urlCreator(href)
         mytry=0
         while mytry < maxtry:
@@ -73,15 +74,26 @@ for i in range(0,len(Pages)):
         try:
             FormParameterList = json.loads(re.findall(r"FormParameterList =(.*})",Content.replace("\\",""))[0])
             soup = BeautifulSoup(Content,"html.parser")
-            OutpuData['Page Link'] = href
-            OutpuData['Pharmacy Staff'] = FormParameterList['PharmacyStaff']
-            OutpuData["Owner/Corporation"] = FormParameterList["Corporation"]
-            OutpuData["Accreditation_number"] = FormParameterList['AccredNo']
-            OutpuData["Date_issued"] = soup.select("#OpeningDate")[0].text
-            OutpuData["Fax"] = soup.select("#FaxSpan")[0].text
-            OutpuData["Phone"] = soup.select("#PhoneSpan")[0].text
-            OutpuData["Postal_Code"] = soup.select("#pid45")[0].text
-            OutpuData["Page Content"] = Content
+            
+            try:OutpuData['Pharmacy Staff'] = FormParameterList['PharmacyStaff']
+            except:pass
+            try:OutpuData["Owner/Corporation"] = FormParameterList["Corporation"]
+            except:pass
+            try:OutpuData["Accreditation_number"] = FormParameterList['AccredNo']
+            except:pass
+            try:OutpuData["Date_issued"] = soup.select("#OpeningDate")[0].text.strip("\r\n").strip()
+            except:pass
+            try:OutpuData["Fax"] = soup.select("#FaxSpan")[0].text.strip("\r\n").strip()
+            except:pass
+            try:OutpuData["Phone"] = soup.select("#PhoneSpan")[0].text.strip("\r\n").strip()
+            except:pass
+            try:OutpuData["Postal_Code"] = soup.select("#pid45")[0].text.strip("\r\n").strip()
+            except:pass
+            try:OutpuData["City"] = page['CompanyLocation']
+            except:pass
+            try:OutpuData["Address"] = page['Address'] +"," +page['CompanyLocation']+","+OutpuData["Postal_Code"]
+            except:pass
+
         except:
           print("Error2")
              
