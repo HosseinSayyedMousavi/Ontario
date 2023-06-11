@@ -18,7 +18,7 @@ headers = {
   'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "Google Chrome";v="114"',
   'sec-ch-ua-mobile': '?0',
   'sec-ch-ua-platform': '"Windows"'}
-
+PersonDict={}
 conn = sqlite3.connect('janeapp.db')
 cursor = conn.cursor()
 try:
@@ -93,8 +93,11 @@ def Corporation_Scraper(browser ,domain , i):
             browser2 = webdriver.Chrome("chromedriver.exe",chrome_options=chrome_options)
             for PLink in PLinks:
                 imagename=( "000"+str(i))[-4:]+"-B-"+branch["name"]+"-P-"
-                Person = Person_Scraper(browser2,PLink,imagename)
-                branch["Persons"].append(Person)
+                try:Person = PersonDict[PLink]
+                except:
+                    Person = Person_Scraper(browser2,PLink,imagename)
+                    branch["Persons"].append(Person)
+                    PersonDict[PLink] = Person
             browser2.close()
         except:
             pass
@@ -174,9 +177,14 @@ def Branch_Scraper(browser,link,i):
             PLinks = Treatment_Category_el.find_elements("xpath",".//a[@class='photo']")
             for z in range(0,len(PLinks)):
                 PLinks[z] = PLinks[z].get_attribute("href")
-            for Plink in PLinks:
+            for PLink in PLinks:
                 imagename=( "000"+str(i))[-4:]+"-B-"+Branch["Name of the Treatment"]+Treatment_Category["Name"]+"-P-"
-                Treatment_Category["Book by Practitioner"].append(Person_Scraper(browser2,Plink,imagename))
+                try:
+                    Person = PersonDict[PLink]
+                except:
+                    Person =Person_Scraper(browser2,PLink,imagename)
+                    Treatment_Category["Book by Practitioner"].append(Person)
+                    PersonDict[PLink] = Person
             browser2.close()
         except:pass
         
